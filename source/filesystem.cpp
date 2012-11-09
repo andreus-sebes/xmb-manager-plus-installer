@@ -277,9 +277,8 @@ string copy_file(string title, const char *dirfrom, const char *dirto, const cha
 	string stotal_files=int_to_string(numfiles_total);
 	string stotal_size=convert_size(copy_totalsize, "auto");
 
-	PF.printf((title+" '"+sfilename+"'\r\n").c_str());
-	PF.printf(("- source: "+cfrom+" \r\n").c_str());
-	PF.printf(("- dest: "+ctoo+" \r\n").c_str());
+	PF.printf(("- source:      "+cfrom+"\r\n").c_str());
+	PF.printf(("- destination: "+ctoo+"\r\n").c_str());
 
 	if ((from = fopen(cfrom.c_str(), "rb"))==NULL) return "Cannot open source file ("+cfrom+") for reading!";
 	if (check_flag!=1)
@@ -478,6 +477,7 @@ string copy_prepare(string appfolder, string operation, string foldername, strin
 
 	//copy files
 	i=0;
+	PF.printf((title+"\r\n").c_str());
 	if (showprogress==0) Mess.SingleProgressBarDialog(title.c_str(), "Processing files...");
 	while (strcmp(final_list_source[i].c_str(),"") != 0)
 	{
@@ -519,6 +519,7 @@ string copy_prepare(string appfolder, string operation, string foldername, strin
 	copy_currentsize=0;
 	numfiles_current=1;
 	title="Checking files ...";
+	PF.printf((title+"\r\n").c_str());
 	if (showprogress==0) Mess.SingleProgressBarDialog(title.c_str(), "Processing files...");
 	while (strcmp(final_list_source[i].c_str(),"") != 0)
 	{
@@ -542,3 +543,98 @@ string copy_prepare(string appfolder, string operation, string foldername, strin
 
 	return "";
 }
+/*
+// zip
+//http://gotbrew.org/git/PSL1GHT/samples/ps3load/source/main.c
+//http://linux.die.net/man/3/libzip
+string zip(const char *zipfile, const char *sourcepath)
+{
+	DIR *dp;
+	struct dirent *dirp=NULL;
+	PF.printf(("Zip to create: "+(string)zipfile+"\r\n").c_str());
+	struct zip* archive = zip_open(zipfile, ZIP_CREATE, NULL);
+	dp = opendir(sourcepath);
+	if (dp == NULL) return "Cannot open directory "+(string)sourcepath;
+	while ( (dirp = readdir(dp) ) )
+	{
+		if ( strcmp(dirp->d_name, ".") != 0 && strcmp(dirp->d_name, "..") != 0 && strcmp(dirp->d_name, "") != 0)
+		{
+			if (dirp->d_type == DT_DIR)
+			{
+				PF.printf(("- directory: "+(string)dirp->d_name+"\r\n").c_str());
+				if (zip_add_dir(archive, dirp->d_name) < 0) return "Error adding directory: "+(string)zip_strerror(archive)+" to "+(string)zipfile;
+			}
+			else
+			{
+				PF.printf(("- filename: "+(string)dirp->d_name+"\r\n").c_str());
+				u8* buff = malloc(0x1000);
+				struct zip_source *s;
+				if ((s=zip_source_buffer(archive, buff, sizeof(buff))) == NULL || zip_add(archive, dirp->d_name, s) < 0)
+				{
+					zip_source_free(s);
+					return "Error adding file: "+(string)zip_strerror(archive)+" to "+(string)zipfile;
+				}
+				free(buff);
+			}
+		}
+	}
+	if (archive) zip_close(archive);
+	return recursiveDelete(sourcepath);
+}
+
+string unzip(string *zipfile, string *destpath)
+{
+	u32 pos = 0;
+	s32 count;
+	
+	#define MIN(a, b) ((a) < (b) ? (a) : (b))
+	PF.printf(("Zip to open: "+zipfile+"\r\n").c_str());
+	struct zip* archive = zip_open(zipfile.c_str(), ZIP_CHECKCONS, NULL);
+	int files = zip_get_num_files(archive);
+	PF.printf(("Number of dir/files inside: "+int_to_string(files)+"\r\n").c_str());
+	if (files > 0)
+	{
+		for (int i = 0; i < files; i++)
+		{
+			PF.printf(("- file/dir: "+int_to_string(i)+"\r\n").c_str());
+			const char* filename = zip_get_name(archive, i, 0);
+			if (!filename) continue;
+			PF.printf(("- filename: "+(string)filename+"\r\n").c_str());
+			if (filename[0]!='/') strcat(destpath.c_str(), "/");
+			strcat(destpath.c_str(), filename);
+			PF.printf(("- complete: "+destpath+"\r\n").c_str());
+			if (filename[strlen(filename)-1]!='/')
+			{
+				PF.printf(("- is file: "+destpath+"\r\n").c_str());
+				struct zip_stat st;
+				if (zip_stat_index(archive, i, 0, &st)) return "Unable to access file "+(string)filename+" in zip.";
+				struct zip_file* zfd = zip_fopen_index(archive, i, 0);
+				if (!zfd) return "Unable to open file "+(string)filename+" in zip.";
+				int tfd = open(destpath, O_CREAT | O_TRUNC | O_WRONLY);
+				if (tfd < 0) return "Error opening temporary file.";
+				pos = 0;
+				u8* buff = malloc(0x1000);
+				while (pos < st.size)
+				{
+					count = MIN(0x1000, st.size - pos);
+					if (zip_fread(zfd, buff, count) != count) return "Error reading from zip.";
+					write(tfd, buff, count);
+					pos += count;
+				}
+				free(buff);
+				zip_fclose(zfd);
+				close(tfd);
+			} 
+			else
+			{
+				PF.printf(("- is dir: "+destpath+"\r\n").c_str());
+				mkdir_one(destpath);
+			}
+			PF.printf("\r\n");
+		}
+	}
+	if (archive) zip_close(archive);
+	return recursiveDelete(zipfile);
+}
+
+*/

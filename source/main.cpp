@@ -4,7 +4,6 @@
 //#include "xmbmp-debug.h"
 #include <io/pad.h>
 #include <time.h>
-#include <zlib.h>
 
 #define MAX_OPTIONS 20
 
@@ -69,6 +68,7 @@ int restore(string appfolder, string foldername)
 		}
 		else //problem in the restore process so emit a warning
 		{
+			if (is_dev_blind_mounted()==0) unmount_dev_blind();
 			Mess.Dialog(MSG_ERROR,("Backup '"+foldername+"' has not restored! A error occured while restoring the backup!\n\nError: "+ret+"\n\nTry to restore again manually, if the error persists, your system may be corrupted, please check all files and if needed reinstall firmare from XMB or recovery menu.").c_str());
 		}
 	}
@@ -103,12 +103,14 @@ int install(string appfolder, string firmware_folder, string app_choice)
 			}
 			else //problem in the copy process so rollback by restoring the backup
 			{
+				if (is_dev_blind_mounted()==0) unmount_dev_blind();
 				Mess.Dialog(MSG_ERROR,("'"+app_choice+"' has not installed! A error occured while copying files!\n\nError: "+ret+"\n\nBackup will be restored.").c_str());
 				return restore(appfolder, foldername);
 			}
 		}
 		else //problem in the backup process so rollback by deleting the backup
 		{
+			if (is_dev_blind_mounted()==0) unmount_dev_blind();
 			Mess.Dialog(MSG_ERROR,("'"+app_choice+"' has not installed! A error occured while doing backuping the files!\n\nError: "+ret+"\n\nIncomplete backup will be deleted.").c_str());
 			if (recursiveDelete(appfolder+"/backups/"+foldername) != "") Mess.Dialog(MSG_ERROR,("Problem while deleting the backup!\n\nError: "+ret+"\n\nTry to delete with a file manager.").c_str());
 		}
@@ -632,7 +634,7 @@ s32 main(s32 argc, char* argv[])
 			if (Mess.GetResponse(MSG_DIALOG_BTN_NO)==1) rtype="soft";
 			PF.printf("- Deleting turnoff file\r\n");
 			sysFsUnlink((char*)"/dev_hdd0/tmp/turnoff");
-			PF.printf("- Rebooting system\r\n");
+			PF.printf(("- Rebooting system ("+rtype+")\r\n").c_str());
 			Graphics->NoRSX_Exit(); //This will uninit the NoRSX lib
 			reboot_sys(rtype); //reboot
 		}

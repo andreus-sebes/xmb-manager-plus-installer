@@ -6,6 +6,8 @@
 #include <dirent.h>
 #include <string>
 #include <algorithm>
+//#include <zlib.h>
+#include <zip.h>
 
 #define CHUNK 65536
 #define APP_TITLEID "XMBMANPLS"
@@ -31,5 +33,7 @@ void check_firmware_changes(string appfolder);
 int check_terms(string appfolder);
 string copy_file(string title, const char *dirfrom, const char *dirto, const char *filename, double filesize, double copy_currentsize, double copy_totalsize, int numfiles_current, int numfiles_total, int check_flag, int showprogress);
 string copy_prepare(string appfolder, string operation, string foldername, string fw_folder, string app);
+//string zip(const char *zipfile, const char *sourcepath);
+//string unzip(const char *zipfile, const char *destpath);
 
 #endif
